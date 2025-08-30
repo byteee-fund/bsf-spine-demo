@@ -1,0 +1,450 @@
+<template>
+	<view class="page">
+	<scroll-view class="scroll-container">
+		<view class="container">
+			<!-- Header -->
+			<view class="header">
+				<text class="title">Jeek Spine 插件演示</text>
+				<text class="subtitle">Spine 动画组件使用示例</text>
+			</view>
+
+			<!-- Demo Section -->
+			<view class="demo-section">
+				<view class="section-title">
+					<text class="section-text">基础用法</text>
+				</view>
+				
+				<!-- Spine Animation Container -->
+				<view class="spine-container">
+					<bsf-spine 
+						:src="currentSpineSrc" 
+						:scale="spineScale" 
+						:offsetX="spineOffsetX" 
+						:offsetY="spineOffsetY"
+						:defaultAnimation="defaultAnimation"
+						@progress="onProgress"
+						@load="onLoad"
+					></bsf-spine>
+				</view>
+
+				<!-- Loading Progress -->
+				<view v-if="loading" class="loading-container">
+					<view class="progress-bar">
+						<view class="progress-fill" :style="{ width: progress + '%' }"></view>
+					</view>
+					<text class="progress-text">加载进度: {{ progress }}%</text>
+				</view>
+
+				<!-- Status -->
+				<view class="status-container">
+					<text class="status-text" :class="{ 'status-success': isLoaded, 'status-loading': loading }">
+						{{ isLoaded ? '动画已加载' : loading ? '正在加载...' : '等待加载' }}
+					</text>
+				</view>
+			</view>
+
+
+			<!-- Controls Section -->
+			<view class="controls-section" v-if="false">
+				<view class="section-title">
+					<text class="section-text">控制面板</text>
+				</view>
+
+				<!-- Spine Source Selection -->
+				<view class="control-group">
+					<text class="control-label">动画源:</text>
+				<!-- 	<picker @change="onSpineSourceChange" :value="currentSpineIndex" :range="spineSources" range-key="name">
+						<view class="picker-container">
+							<text class="picker-text">{{ spineSources[currentSpineIndex].name }}</text>
+							<text class="picker-arrow">▼</text>
+						</view>
+					</picker> -->
+				</view>
+
+				<!-- Scale Control -->
+				<view class="control-group">
+					<text class="control-label">缩放: {{ spineScale.toFixed(1) }}</text>
+					<slider 
+						:value="spineScale * 10" 
+						@change="onScaleChange" 
+						min="1" 
+						max="30" 
+						step="1"
+						show-value="false"
+						activeColor="#007AFF"
+					></slider>
+				</view>
+
+				<!-- Offset X Control -->
+				<view class="control-group">
+					<text class="control-label">X偏移: {{ spineOffsetX }}</text>
+					<slider 
+						:value="spineOffsetX + 100" 
+						@change="onOffsetXChange" 
+						min="0" 
+						max="200" 
+						step="1"
+						show-value="false"
+						activeColor="#007AFF"
+					></slider>
+				</view>
+
+				<!-- Offset Y Control -->
+				<view class="control-group">
+					<text class="control-label">Y偏移: {{ spineOffsetY }}</text>
+					<slider 
+						:value="spineOffsetY + 100" 
+						@change="onOffsetYChange" 
+						min="0" 
+						max="200" 
+						step="1"
+						show-value="false"
+						activeColor="#007AFF"
+					></slider>
+				</view>
+
+				<!-- Animation Control -->
+				<view class="control-group">
+					<text class="control-label">默认动画:</text>
+					<input 
+						class="animation-input" 
+						v-model="defaultAnimation" 
+						placeholder="输入动画名称"
+					></input>
+				</view>
+
+				<!-- Reset Button -->
+				<view class="button-group">
+					<button class="reset-button" @click="resetToDefaults">重置为默认值</button>
+				</view>
+			</view>
+
+			<!-- Documentation Section -->
+			<view class="docs-section" v-if="false">
+				<view class="section-title">
+					<text class="section-text">使用说明</text>
+				</view>
+				
+				<view class="docs-content">
+					<view class="doc-item">
+						<text class="doc-title">组件属性:</text>
+						<text class="doc-text">• src: Spine动画文件URL (zip格式)</text>
+						<text class="doc-text">• scale: 缩放比例 (默认: 1.0)</text>
+						<text class="doc-text">• offsetX: X轴偏移 (默认: 0)</text>
+						<text class="doc-text">• offsetY: Y轴偏移 (默认: 0)</text>
+						<text class="doc-text">• defaultAnimation: 默认动画名称 (默认: "idle")</text>
+					</view>
+					
+					<view class="doc-item">
+						<text class="doc-title">事件:</text>
+						<text class="doc-text">• @progress: 下载进度事件</text>
+						<text class="doc-text">• @load: 加载完成事件</text>
+					</view>
+					
+					<view class="doc-item">
+						<text class="doc-title">注意事项:</text>
+						<text class="doc-text">• 支持的文件格式: .zip (包含spine.atlas和spine.json)</text>
+						<text class="doc-text">• 文件会自动下载并缓存到本地</text>
+						<text class="doc-text">• 仅支持App平台 (Android/iOS)</text>
+					</view>
+				</view>
+			</view>
+		</view>
+	</scroll-view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				// Spine animation sources
+				spineSources: [
+					{ name: '示例动画1', url: 'https://byteee.oss-cn-hangzhou.aliyuncs.com/test.zip' },
+					// { name: '示例动画2', url: 'https://example.com/spine2.zip' },
+					// { name: '示例动画3', url: 'https://example.com/spine3.zip' }
+				],
+				currentSpineIndex: 0,
+				
+				// Spine properties
+				spineScale: 1.0,
+				spineOffsetX: 0,
+				spineOffsetY: 0,
+				defaultAnimation: 'idle',
+				
+				// Loading state
+				loading: false,
+				progress: 0,
+				isLoaded: false
+			}
+		},
+		computed: {
+			currentSpineSrc() {
+				return this.spineSources[this.currentSpineIndex].url
+			}
+		},
+		onLoad() {
+			console.log('Jeek Spine Demo 页面加载完成')
+		},
+		methods: {
+			// Spine source change handler
+			onSpineSourceChange(e) {
+				this.currentSpineIndex = e.detail.value
+				this.isLoaded = false
+				this.progress = 0
+			},
+			
+			// Scale change handler
+			onScaleChange(e) {
+				this.spineScale = e.detail.value / 10
+			},
+			
+			// Offset X change handler
+			onOffsetXChange(e) {
+				this.spineOffsetX = e.detail.value - 100
+			},
+			
+			// Offset Y change handler
+			onOffsetYChange(e) {
+				this.spineOffsetY = e.detail.value - 100
+			},
+			
+			// Progress event handler
+			onProgress(progress) {
+				this.loading = true
+				this.progress = progress
+				console.log('下载进度:', progress + '%')
+			},
+			
+			// Load event handler
+			onLoad(loaded) {
+				this.loading = false
+				this.isLoaded = loaded
+				console.log('Spine动画加载完成:', loaded)
+			},
+			
+			// Reset to default values
+			resetToDefaults() {
+				this.spineScale = 1.0
+				this.spineOffsetX = 0
+				this.spineOffsetY = 0
+				this.defaultAnimation = 'idle'
+				this.currentSpineIndex = 0
+			}
+		}
+	}
+</script>
+
+<style>
+	.page {
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+	
+	.scroll-container {
+		flex: 1;
+		overflow-y: scroll;
+	}
+	
+	.container {
+		padding: 20px;
+		background-color: #f5f5f5;
+		flex: 1;
+	}
+
+	.header {
+		text-align: center;
+		margin-bottom: 30px;
+	}
+
+	.title {
+		font-size: 24px;
+		font-weight: bold;
+		color: #333;
+		display: block;
+		margin-bottom: 8px;
+	}
+
+	.subtitle {
+		font-size: 14px;
+		color: #666;
+		display: block;
+	}
+
+	.section-title {
+		margin-bottom: 15px;
+	}
+
+	.section-text {
+		font-size: 18px;
+		font-weight: bold;
+		color: #333;
+	}
+
+	.demo-section {
+		background: white;
+		border-radius: 12px;
+		padding: 20px;
+		margin-bottom: 20px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	}
+
+	.spine-container {
+		width: 100%;
+		height: 300px;
+		background: black;
+		border-radius: 8px;
+		overflow: hidden;
+		margin-bottom: 15px;
+	}
+
+	.loading-container {
+		margin-bottom: 15px;
+	}
+
+	.progress-bar {
+		width: 100%;
+		height: 6px;
+		background-color: #e0e0e0;
+		border-radius: 3px;
+		overflow: hidden;
+		margin-bottom: 8px;
+	}
+
+	.progress-fill {
+		height: 100%;
+		background: linear-gradient(90deg, #007AFF, #5856D6);
+		transition: width 0.3s ease;
+	}
+
+	.progress-text {
+		font-size: 12px;
+		color: #666;
+		text-align: center;
+		display: block;
+	}
+
+	.status-container {
+		text-align: center;
+	}
+
+	.status-text {
+		font-size: 14px;
+		padding: 8px 16px;
+		border-radius: 20px;
+		background-color: #f0f0f0;
+		color: #666;
+	}
+
+	.status-success {
+		background-color: #d4edda;
+		color: #155724;
+	}
+
+	.status-loading {
+		background-color: #fff3cd;
+		color: #856404;
+	}
+
+	.controls-section {
+		background: white;
+		border-radius: 12px;
+		padding: 20px;
+		margin-bottom: 20px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	}
+
+	.control-group {
+		margin-bottom: 20px;
+	}
+
+	.control-label {
+		font-size: 14px;
+		color: #333;
+		margin-bottom: 8px;
+		display: block;
+	}
+
+	.picker-container {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		padding: 12px 16px;
+		background-color: #f8f9fa;
+		border: 1px solid #dee2e6;
+		border-radius: 8px;
+	}
+
+	.picker-text {
+		font-size: 14px;
+		color: #333;
+	}
+
+	.picker-arrow {
+		font-size: 12px;
+		color: #666;
+	}
+
+	.animation-input {
+		width: 100%;
+		padding: 12px 16px;
+		background-color: #f8f9fa;
+		border: 1px solid #dee2e6;
+		border-radius: 8px;
+		font-size: 14px;
+		color: #333;
+	}
+
+	.button-group {
+		margin-top: 20px;
+	}
+
+	.reset-button {
+		width: 100%;
+		padding: 12px;
+		background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: bold;
+	}
+
+	.docs-section {
+		background: white;
+		border-radius: 12px;
+		padding: 20px;
+		box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+	}
+
+	.docs-content {
+		background-color: #f8f9fa;
+		border-radius: 8px;
+		padding: 16px;
+	}
+
+	.doc-item {
+		margin-bottom: 20px;
+	}
+
+	.doc-item:last-child {
+		margin-bottom: 0;
+	}
+
+	.doc-title {
+		font-size: 16px;
+		font-weight: bold;
+		color: #333;
+		margin-bottom: 8px;
+		display: block;
+	}
+
+	.doc-text {
+		font-size: 14px;
+		color: #666;
+		line-height: 1.5;
+		margin-bottom: 4px;
+		display: block;
+	}
+</style>

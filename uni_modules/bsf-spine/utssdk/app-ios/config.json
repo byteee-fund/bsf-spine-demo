@@ -1,0 +1,26 @@
+{
+  "deploymentTarget": "13.0",
+  "dependencies-pods": [
+    {
+      "name": "Spine",
+      "repo": {
+        "git": "https://github.com/EsotericSoftware/spine-runtimes.git",
+        "tag": "4.2"
+      }
+    },
+    {
+      "name": "SpineCppLite",
+      "repo": {
+        "git": "https://github.com/EsotericSoftware/spine-runtimes.git",
+        "tag": "4.2"
+      }
+    },
+    {
+      "name": "SpineShadersStructs",
+      "repo": {
+        "git": "https://github.com/EsotericSoftware/spine-runtimes.git",
+        "tag": "4.2"
+      }
+    }
+  ]
+}

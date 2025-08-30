@@ -1,0 +1,176 @@
+<template>
+	<native-view style="width: 100%; height: 100%;" @init="onviewinit"></native-view>
+</template>
+<script setup lang="uts">
+	import { JeekSpine } from "@/uni_modules/bsf-spine";
+
+	const fileManager = uni.getFileSystemManager()
+
+	let view : JeekSpine | null = null;
+
+	type JeekSpineProps = {
+		src : string
+		scale : number
+		offsetX : number
+		offsetY : number
+		defaultAnimation : string
+	}
+
+	const props = withDefaults(defineProps<JeekSpineProps>(), {
+		src: "",
+		scale: 1,
+		offsetX: 0,
+		offsetY: 0,
+		defaultAnimation: "idle"
+	})
+
+	//声明事件
+	const emit = defineEmits<{
+		(e : "progress", event : number) : void
+		(e : "load", event : boolean) : void
+	}>()
+
+	const _loadLocalSpine = async (fileParentPath: string) => {
+	  console.log("fileParetnPath", fileParentPath)
+	  
+	  // const atlasPath = findFilePath(fileParentPath, 'test/spine.atlas')
+	  // const jsonPath = findFilePath(fileParentPath, 'test/spine.json')
+	  
+	  // if (!atlasPath || !jsonPath) {
+	  //   console.error("找不到必要的 spine 资源文件")
+	  //   return
+	  // }
+	
+	  view?.updateSpine(`${fileParentPath}/spineboy.atlas`, `${fileParentPath}/spineboy.json`, props.defaultAnimation, () => {
+	    emit("load", true)
+	    view?.resetSpineAttributes(props.scale, props.offsetY, props.offsetX)
+	  })
+	}
+	
+	// const findFilePath = (dir: string, fileName: string): string | null => {
+	//   const list = fileManager.readdirSync(dir);
+	
+	//   for (let i = 0; i < list.length; i++) {
+	//     const item = list[i]
+	//     if (item.name === fileName) {
+			
+	//       return `${dir}/${fileName}`
+	//     } else if (item.isDirectory) {
+	//       const result = findFilePath(`${dir}/${item.name}`, fileName)
+	//       if (result) return result
+	//     }
+	//   }
+	//   return null
+	// }
+
+	const loadSpine = () => {
+		if (props.src == "" || view == null) return
+		// 获取缓存路径
+		const dirName = props.src.replaceAll("/", "_").replaceAll(".", "-")
+		let cachePath = ""
+		const pathMap = fileManager.statSync(uni.env.CACHE_PATH, false)
+		pathMap.forEach((item, key) => {
+			// #ifdef APP-IOS
+			cachePath = item.path as string
+			// #endif
+			// #ifndef APP-IOS
+			cachePath = item.get("path") as string
+			// #endif
+		})
+		if (cachePath == "") {
+			console.error("未能获取到缓存路径")
+			return
+		}
+		// 拼接本地路径
+		const fileParentPath = `${cachePath}/${dirName}`
+		// 检查本地路径是否存在
+		fileManager.access({
+			path: `${fileParentPath}`,
+			success: () => {
+				console.log("文件已存在，直接加载")
+				_loadLocalSpine(fileParentPath)
+			},
+			fail: (e) => {
+				console.warn(e)
+				console.log("正在从远程下载文件")
+				const downloadTask = uni.downloadFile({
+					url: props.src,
+					success: e => {
+						console.log("download success", e.tempFilePath)
+						
+						 const tempZip = e.tempFilePath
+						    const fileParentPath = `${uni.env.CACHE_PATH}/${dirName}`
+						
+						    // 1. 确保目录存在
+						    try {
+						      fileManager.mkdirSync(fileParentPath, true)
+						    } catch (e) {
+						      // 目录已存在也会抛错，忽略即可
+						    }
+						
+						 fileManager.unzip({
+						      zipFilePath: tempZip,
+						      targetPath: fileParentPath,
+						      success: () => {
+						        console.log('unzip 成功 ->', fileParentPath)
+						        // 3. 调用加载函数
+						        _loadLocalSpine(fileParentPath)
+						      },
+						      fail: err => {
+						        console.error('unzip 失败：', err)
+						      }
+						    })
+						// fileManager.readZipEntry({
+						// 	filePath: e.tempFilePath,
+						// 	success: e => {
+						// 		e.entries.forEach((item, key) => {
+						// 			const fileName = key.split("/")[1]!
+						// 			fileManager.writeFileSync(`${fileParentPath}/${fileName}`, item.data!, "utf-8")
+						// 		})
+						// 		_loadLocalSpine(fileParentPath)
+						// 	},
+						// 	fail: e => {
+						// 		console.error(e)
+						// 	}
+						// })
+					},
+					fail: (e : DownloadFileFail) => {
+						console.error("下载文件失败", e)
+						fileManager.rmdir({
+							dirPath: fileParentPath,
+							recursive: true,
+							fail: e => {
+								console.error(e)
+							}
+						})
+					}
+				})
+				downloadTask.onProgressUpdate(e => {
+					console.log(e.progress)
+					emit("progress", e.progress)
+				})
+			}
+		})
+	}
+
+	//native-view初始化时触发此方法
+	const onviewinit = (e : UniNativeViewInitEvent) => {
+		console.log("onviewinit");
+		view = new JeekSpine(e.detail.element);
+		loadSpine()
+	}
+
+	//监听属性变化
+	watch(
+		() : string => props.src,
+		() => {
+			loadSpine()
+		},
+		{ immediate: true }
+	)
+
+	onUnmounted(() => {
+		// iOS平台需要主动释放 uts 实例
+		view?.destroy()
+	})
+</script>

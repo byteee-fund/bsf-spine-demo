@@ -1,0 +1,86 @@
+{
+    "id": "bsf-spine",
+    "name": "Spine动画库 - UTS插件",
+    "displayName": "Spine动画库 - UTS插件",
+    "version": "1.0.0",
+    "description": "基于 Spine 动画引擎的 uni-app 原生组件，支持 Android 和 iOS 平台",
+    "keywords": [
+        "spine",
+        "动画",
+        "animation",
+        "2d",
+        "uts"
+    ],
+    "dcloudext": {
+        "type": "component-vue",
+        "sale": {
+            "regular": {
+                "price": "399.90"
+            },
+            "sourcecode": {
+                "price": "799.90"
+            }
+        },
+        "contact": {
+            "qq": "281674669"
+        },
+        "declaration": {
+            "ads": "无",
+            "data": "插件不采集任何数据",
+            "permissions": "无"
+        },
+        "npmurl": ""
+    },
+    "uni_modules": {
+        "dependencies": [],
+        "encrypt": [],
+        "platforms": {
+            "cloud": {
+                "tcb": "y",
+                "aliyun": "y"
+            },
+            "client": {
+                "App": {
+                    "app-vue": "u",
+                    "app-nvue": "u",
+                    "app-uvue": "y"
+                },
+                "H5-mobile": {
+                    "Safari": "u",
+                    "Android Browser": "u",
+                    "微信浏览器(Android)": "u",
+                    "QQ浏览器(Android)": "u"
+                },
+                "H5-pc": {
+                    "Chrome": "u",
+                    "IE": "u",
+                    "Edge": "u",
+                    "Firefox": "u",
+                    "Safari": "u"
+                },
+                "小程序": {
+                    "微信": "u",
+                    "阿里": "u",
+                    "百度": "u",
+                    "字节跳动": "u",
+                    "QQ": "u",
+                    "钉钉": "n",
+                    "快手": "n",
+                    "飞书": "n",
+                    "京东": "n"
+                },
+                "快应用": {
+                    "华为": "u",
+                    "联盟": "u"
+                },
+                "Vue": {
+                    "vue2": "n",
+                    "vue3": "n"
+                }
+            }
+        }
+    },
+    "repository": "https://github.com/byteee-fund/bsf-spine-demo",
+    "engines": {
+    }
+}

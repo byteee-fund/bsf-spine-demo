@@ -1,0 +1,6 @@
+{
+	"minSdkVersion": 24,
+    "dependencies": [
+  	    "com.esotericsoftware.spine:spine-android:4.2.10"
+    ]
+}
